@@ -18,20 +18,32 @@ from mqtt_ha import MqttHA
 
 
 def connect_wifi():
-    """Connect to WiFi with timeout."""
+    """Connect to WiFi with timeout and retry."""
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
-    timeout = 30
-    start = time.time()
-    while not wlan.isconnected():
-        if time.time() - start >= timeout:
-            print("WiFi timeout")
-            return False
+    time.sleep(1)  # Let WiFi chip initialize after reset
+
+    for attempt in range(3):
+        wlan.disconnect()
+        time.sleep(0.5)
+        wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+        start = time.time()
+        while not wlan.isconnected():
+            if time.time() - start >= 15:
+                print("WiFi attempt %d timed out" % (attempt + 1))
+                break
+            time.sleep(1)
+            print("Connecting to WiFi...")
+        if wlan.isconnected():
+            print("WiFi connected:", wlan.ifconfig())
+            return True
+        wlan.active(False)
+        time.sleep(2)
+        wlan.active(True)
         time.sleep(1)
-        print("Connecting to WiFi...")
-    print("WiFi connected:", wlan.ifconfig())
-    return True
+
+    print("WiFi failed after 3 attempts")
+    return False
 
 
 def main():
