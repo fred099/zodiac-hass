@@ -76,13 +76,15 @@ def main():
         print("Boost: %s" % val)
         tri.boost = val
 
+    last_percent = [DEFAULT_PERCENT]
+
     def on_set_power(val):
         print("Power: %s" % val)
         if val:
-            # Turn on with last known percent, or 50% default
-            if tri.desired_percent == 0:
-                tri.desired_percent = 50
+            tri.desired_percent = last_percent[0]
         else:
+            if tri.desired_percent > 0:
+                last_percent[0] = tri.desired_percent
             tri.desired_percent = 0
             tri.boost = False
 
