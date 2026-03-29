@@ -21,6 +21,7 @@ ADDR_TRI = 0xB0  # AquaLink Tri mode
 CMD_PROBE = 0x00
 CMD_ACK = 0x01
 CMD_STATUS = 0x02
+CMD_MSG = 0x03
 CMD_PERCENT = 0x11
 CMD_GETID = 0x14
 CMD_PPM = 0x16
@@ -217,18 +218,18 @@ class ZodiacTri:
           [12]  checksum
           [13-14] DLE ETX
         """
-        if len(raw) < 13:
-            # Short packet (AquaPure mode fallback)
+        if len(raw) <= 11:
+            # Short packet (AquaPure mode, 11 bytes)
             parsed = parse_packet(raw)
             if parsed:
                 dest, cmd, data = parsed
-                if len(data) >= 5:
+                if len(data) >= 2:
                     self.salt_ppm = data[0] * 100
                     self.status_byte = data[1]
             return
 
-        # Full AquaLink Tri response
-        if len(raw) >= 15:
+        # Full AquaLink Tri response (15 bytes)
+        if len(raw) > 11:
             self.salt_ppm = raw[6] * 100
             self.status_byte = raw[7]
             self.ph_setpoint = raw[8] / 10.0
